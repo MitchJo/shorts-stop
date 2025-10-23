@@ -1,11 +1,12 @@
 var messageBubbleTimeout;
 
+const browserAPI = chrome;
+
 const events = {
     GET_SETTINGS: "GET_SETTINGS",
     LIMIT_SHORTS: "LIMIT_SHORTS",
     BLOCK_ALL: "BLOCK_ALL"
 }
-
 
 function hour2Minutes(totalMinutes) {
     if (!totalMinutes) return { hours: 0, minutes: 0 }
@@ -33,7 +34,7 @@ function processTimeLimit(formData) {
 
     const totalMinutes = (hours * 60) + minutes;
 
-    chrome.runtime.sendMessage({
+    browserAPI.runtime.sendMessage({
         type: events.LIMIT_SHORTS, 
         data: {
             amount: shortsAmt,
@@ -53,7 +54,7 @@ function processTimeLimit(formData) {
 }
 
 function processBlockingAllShorts() {
-    chrome.runtime.sendMessage({ type: events.BLOCK_ALL }, (response) => {
+    browserAPI.runtime.sendMessage({ type: events.BLOCK_ALL }, (response) => {
         if (response?.status) {
             showMessageBubble();
             shortsAmount.value = 0;
@@ -90,7 +91,7 @@ function onRadioSettingChange(e) {
     }
 }
 
-chrome.runtime.sendMessage({ type: events.GET_SETTINGS }, (response) => {
+browserAPI.runtime.sendMessage({ type: events.GET_SETTINGS }, (response) => {
 
     const { status, data } = response;
     if (!status) return;

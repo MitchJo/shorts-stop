@@ -3,5 +3,5 @@
 </p>
 
 <p width="100%" style="text-align:center">
-    ShortStop is a chrome extention that helps users to prevent <b>Doom-Scrolling</b> YouTube Shorts or blocks them entirely.
+    ShortStop is a browser[chrome/edge] extension that helps users prevent <b>Doom-Scrolling</b> YouTube Shorts or blocks them entirely.
 </p>

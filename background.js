@@ -1,3 +1,5 @@
+const browserAPI = chrome;
+
 const shortsUrl = "youtube.com/shorts/";
 
 const keys = {
@@ -16,7 +18,7 @@ function getTimeLimitData(){
 
     return new Promise((resolve, reject) => {
 
-        chrome.storage.local.get(keys.timeLimit)
+        browserAPI.storage.local.get(keys.timeLimit)
             .then(s=>resolve(s[keys.timeLimit]))
             .catch(e=> {
                 console.log(e.message);
@@ -30,7 +32,7 @@ function getTimeLimitData(){
 function getWatchedData(){
     return new Promise((resolve, _) => {
 
-        chrome.storage.local.get(keys.watchedData)
+        browserAPI.storage.local.get(keys.watchedData)
             .then(s=>resolve(s[keys.watchedData]))
             .catch(e=> {
                 console.log(e.message);
@@ -43,7 +45,7 @@ function getWatchedData(){
 function setWatchedData(data){
     return new Promise((resolve, reject) => {
 
-        chrome.storage.local.set({[keys.watchedData]: data})
+        browserAPI.storage.local.set({[keys.watchedData]: data})
             .then(s=>resolve(s))
             .catch(e=> reject(e))
         
@@ -72,7 +74,7 @@ function getVideoUrl(url) {
 function isUrlBlocked(targetUrl) {
 
     return new Promise((resolve, _) => {
-        chrome.declarativeNetRequest.getDynamicRules(rules => {
+        browserAPI.declarativeNetRequest.getDynamicRules(rules => {
             const match = rules.find(rule => {
                 return rule.condition?.urlFilter === targetUrl;
             });
@@ -86,15 +88,15 @@ function unblock(path){
 
     return new Promise((resolve,reject) => {
 
-        chrome.storage.local.get(path, data => {
+        browserAPI.storage.local.get(path, data => {
             const ruleId = data[path]
             if (ruleId) {
 
-                chrome.declarativeNetRequest.updateDynamicRules({
+                browserAPI.declarativeNetRequest.updateDynamicRules({
                     addRules: [],
                     removeRuleIds: [ruleId]
                 }, () => {
-                    chrome.storage.local.remove(path);
+                    browserAPI.storage.local.remove(path);
                     resolve({ status: true, message: "Successfully unblock path." });
                 });
                 
@@ -110,13 +112,13 @@ function blockUrl(url){
     return new Promise((resolve, _) => {
         
         try{
-            chrome.storage.local.remove(keys.timeLimit)
-            chrome.storage.local.remove(keys.watchedData)
+            browserAPI.storage.local.remove(keys.timeLimit)
+            browserAPI.storage.local.remove(keys.watchedData)
         }catch(e){}
 
         const ruleId = Math.floor(Date.now() % 1000000);
 
-        chrome.declarativeNetRequest.updateDynamicRules({
+        browserAPI.declarativeNetRequest.updateDynamicRules({
             addRules: [{
                 id: ruleId,
                 priority: 1,
@@ -137,7 +139,7 @@ function blockUrl(url){
         () => {
 
             try {
-                chrome.storage.local.set({ [url]: ruleId });
+                browserAPI.storage.local.set({ [url]: ruleId });
                 resolve({ success: true, message: 'URL blocked.' });
             } catch (e) {
                 resolve({ success: false, message: e.message || "An error occurred." })
@@ -151,7 +153,7 @@ function blockUrl(url){
 function saveTimeLimit(data){
     return new Promise((resolve, reject) => {
 
-        chrome.storage.local.set({[keys.timeLimit]: data })
+        browserAPI.storage.local.set({[keys.timeLimit]: data })
             .then(s=>{
                 resolve({status: true, message: "Time limit saved successfully."})
             })
@@ -205,8 +207,8 @@ function processLimiter(tabId){
         })
 
         if(shortsWatched < 1 ) {
-            const redirectUrl = chrome.runtime.getURL("warning.html");
-            chrome.tabs.update(tabId, { url: redirectUrl });
+            const redirectUrl = browserAPI.runtime.getURL("warning.html");
+            browserAPI.tabs.update(tabId, { url: redirectUrl });
         }
 
         resolve(true);
@@ -219,7 +221,7 @@ function getSettingsData(){
     return new Promise((resolve, reject) => {
 
         try{
-           chrome.storage.local.get(shortsUrl)
+           browserAPI.storage.local.get(shortsUrl)
             .then(s=> {
                 if(s[shortsUrl]) resolve({status: true, data: {selector: 'blockAll'} }) 
             });
@@ -244,7 +246,7 @@ function getSettingsData(){
 
 }
 
-chrome.runtime.onMessage.addListener((msg, sender, sendMessage) => {
+browserAPI.runtime.onMessage.addListener((msg, sender, sendMessage) => {
 
     switch (msg.type) {
         case events.GET_SETTINGS:
@@ -270,7 +272,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendMessage) => {
 
 });
 
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
     if (!changeInfo.url) return true;
 
@@ -280,8 +282,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     const isBlocked = await isUrlBlocked(url);
 
     if (isBlocked) {
-        const redirectUrl = chrome.runtime.getURL("blocked.html");
-        chrome.tabs.update(tabId, { url: redirectUrl });
+        const redirectUrl = browserAPI.runtime.getURL("blocked.html");
+        browserAPI.tabs.update(tabId, { url: redirectUrl });
         return true;
     }
 

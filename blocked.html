@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blocked Page</title>
+  <style>
+    :root {
+      --background: #FDF6E3;
+      --primary: #6B8E23;
+      --secondary: #A3C586;
+      --accent: #FFD166;
+      --highlight: #87CEEB;
+      --text: #3B3A30;
+    }
+
+    body {
+      font-family: sans-serif;
+      background: var(--background);
+      color: var(--text);
+      margin: 0;
+    }
+
+    main,
+    .image-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    main {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .image-container {
+      background-color: white;
+      padding: 1.5em;
+      max-width: 320px;
+      border-radius: 4px;
+    }
+
+    .image-container p {
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 1.4;
+      margin: 0;
+      margin-top: .5em;
+    }
+
+    .image-container img {
+      max-width: 320px;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <div class="image-container">
+      <img src="assets/bg/blocked-reminder.jpg" alt="blocked-reminder.jpg">
+      <p>You have blocked Youtube shorts.</p>
+    </div>
+  </main>
+</body>
+
+</html>

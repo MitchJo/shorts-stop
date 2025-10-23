@@ -1,0 +1,50 @@
+{
+    "name": "ShortsStop",
+    "manifest_version": 3,
+    "version": "1.0.0",
+    "icons": {
+        "16": "assets/icons/ShortsStop16.png",
+        "48": "assets/icons/ShortsStop48.png",
+        "128": "assets/icons/ShortsStop128.png"
+    },
+    "action": {
+        "default_popup": "app.html",
+        "default_icon": {
+            "16": "assets/icons/ShortsStop16.png",
+            "32": "assets/icons/ShortsStop32.png"
+        }
+    },
+    "description": "Help users prevent Doom-Scrolling Youtube shorts or blocks them entirely.",
+    "permissions": [
+        "tabs",
+        "scripting",
+        "activeTab",
+        "storage",
+        "declarativeNetRequest",
+        "declarativeNetRequestWithHostAccess"
+    ],
+    "host_permissions": [
+        "*://*.youtube.com/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": ["*://*.youtube.com/*"],
+
+            "js": [
+                "content.js"
+            ],
+            
+            "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["blocked.html","warning.html"],
+            "matches": ["<all_urls>"]
+        }
+    ]
+
+}

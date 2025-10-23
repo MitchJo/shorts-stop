@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShortsStop</title>
+    <style>
+
+        :root {
+            --background: #FDF6E3;
+            --primary: #6B8E23;
+            --secondary: #A3C586;
+            --accent: #FFD166;
+            --highlight: #87CEEB;
+            --text: #3B3A30;  
+        }
+
+
+        body{
+            width: 300px;
+            height: auto;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+        }
+
+        h3 {
+            margin: 0;
+            width: 100%;
+            text-align: center;
+            background-color: var(--highlight);
+            padding: .5em 0;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 1em;
+            justify-content: center;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .form-container{
+            padding: 0 .5em;
+            padding-bottom: .5em;
+        }
+
+        #settingsForm {
+            display: flex;
+            flex-direction: column;
+            gap: .25em;
+            justify-content: center;
+        }
+
+        #settingsForm label {
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .row{
+            display: flex;
+            align-items: center;
+            min-height: 30px;
+        }
+
+        .row.hidden {
+            display: none;
+        }
+
+        .row#limitSettings {
+            border: 1px solid var(--highlight);
+            border-radius: 4px;
+            padding: .5em;
+            align-items: end;
+        }
+
+        .row input[type=number] {
+            max-width: 40px;
+        }
+
+        #settingsForm input[type=submit] {
+            margin: .25em 0;
+            outline: none;
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+            background-color: var(--secondary);
+            width: 100%;
+            height: fit-content;
+            padding: .5em;
+            cursor: pointer;
+            transform-origin: center;
+            opacity: 1;
+            transform: scale(1);
+            transition: transform 0.2s linear, opacity 0.2s linear;
+            font-weight: 600;
+        }
+
+        .row span{
+            font-size: 12px;
+        }
+
+        .group{
+            display: flex;
+            flex-direction: column;
+            gap: .25em;
+            margin: 0 .25em;
+        }
+
+        .group p{
+            margin: 0;
+            font-size: 10px;
+        }
+
+        #settingsForm input[type=submit]:active {
+            transform: scale(.8);
+        }
+        #settingsForm input[type=submit]:disabled{
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .bubble{
+            display: none;
+            position: fixed;
+            top: 2px;
+            right: -10px;
+            opacity: 0;
+            margin: 0;
+            width: fit-content;
+            height: fit-content;
+            padding: .5em 1em;
+            border-radius: 5px;
+            animation: slideDown 0.2s linear forwards;
+        }
+
+        .bubble.show{
+            display: block;
+        }
+
+        .bubble.show.success{
+            background-color: var(--accent);
+        }
+
+        @keyframes slideDown {
+            0%{
+                right: -10px;
+                opacity: 0;
+            }
+            100%{
+                right: 10px;
+                opacity: 1;
+            }
+        }
+        
+    </style>
+</head>
+
+<body>
+    <main>
+        <h3>Settings</h3>
+        <div class="form-container">
+            <form action="#" id="settingsForm">
+
+                <div class="row">
+                    <input type="radio" name="setting" id="blockAllRadioBtn" checked value="blockAll">
+                    <label for="blockAllRadioBtn">🚫 Block Youtube shorts.</label>
+                </div>
+
+                <div class="row">
+                    <input type="radio" name="setting" id="timeLimitRadioBtn" value="timeLimit">
+                    <label for="timeLimitRadioBtn">⏱️ Limit Youtube shorts usage.</label>
+                </div>
+
+                <div class="row hidden" id="limitSettings">
+                    <span for="shortsAmount">Allow &nbsp;</span>
+                    <input type="number" min="1" max="200" name="shortsAmount" id="shortsAmount" placeholder="2">
+                    <span>&nbsp;Shorts within&nbsp;</span>
+                    <div class="group">
+                        <p>Hour</p>
+                        <input type="number" min="0" max="23" name="hours" id="hours" placeholder="HH">
+                    </div>
+                    <div class="group">
+                        <p>Minutes</p>
+                        <input type="number" min="0" max="59" name="minutes" id="minutes" placeholder="MM">
+                    </div>
+                </div>
+
+                <input type="submit" id="submitBtn" value="💾 Save">
+
+            </form>
+        </div>
+        <p id="messageBubble" class="bubble">Saved</p>
+    </main>
+    <script src="app.js"></script>
+</body>
+
+</html>

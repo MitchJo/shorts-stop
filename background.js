@@ -5,13 +5,16 @@ const shortsUrl = "youtube.com/shorts/";
 const keys = {
     blockPath: shortsUrl,
     timeLimit: "timeLimit",
-    watchedData: "watchedData" 
+    watchedData: "watchedData",
+    hideAll: "hideAll"
 }
 
 const events = {
     GET_SETTINGS: "GET_SETTINGS",
     LIMIT_SHORTS: "LIMIT_SHORTS",
-    BLOCK_ALL: "BLOCK_ALL"
+    BLOCK_ALL: "BLOCK_ALL",
+    HIDE_ALL: "HIDE_ALL",
+    TAB_CHANGED: "TAB_CHANGED"
 }
 
 function getTimeLimitData(){
@@ -19,9 +22,11 @@ function getTimeLimitData(){
     return new Promise((resolve, reject) => {
 
         browserAPI.storage.local.get(keys.timeLimit)
-            .then(s=>resolve(s[keys.timeLimit]))
-            .catch(e=> {
-                console.log(e.message);
+            .then(s=>{
+                if(!s[keys.timeLimit]) reject(null)    
+                resolve(s[keys.timeLimit])
+            })
+            .catch(_=> {
                 reject(null)
             })
         
@@ -33,7 +38,10 @@ function getWatchedData(){
     return new Promise((resolve, _) => {
 
         browserAPI.storage.local.get(keys.watchedData)
-            .then(s=>resolve(s[keys.watchedData]))
+            .then(s=>{
+                if(!s[keys.watchedData]) resolve({lastWatchedTime: 0, remaining: 0})
+                resolve(s[keys.watchedData])
+            })
             .catch(e=> {
                 console.log(e.message);
                 resolve({lastWatchedTime: 0, remaining: 0})
@@ -114,6 +122,7 @@ function blockUrl(url){
         try{
             browserAPI.storage.local.remove(keys.timeLimit)
             browserAPI.storage.local.remove(keys.watchedData)
+            browserAPI.storage.local.remove(keys.hideAll)
         }catch(e){}
 
         const ruleId = Math.floor(Date.now() % 1000000);
@@ -150,6 +159,26 @@ function blockUrl(url){
     });
 }
 
+function hideAllShorts(){
+    return new Promise((resolve,reject) => {
+        unblock(shortsUrl).then(_=>{}).catch(_=>{});
+
+        try{
+            browserAPI.storage.local.remove(keys.timeLimit)
+            browserAPI.storage.local.remove(keys.watchedData)
+        }catch(_){}
+
+        try{
+            browserAPI.storage.local.set({ [keys.hideAll]: true })
+            resolve({ status: true, message: 'Shorts hidden.' })
+        }catch(e){
+            reject({ status: false, message: e.message || 'Cannot save.' })
+        }
+
+    })
+}
+
+
 function saveTimeLimit(data){
     return new Promise((resolve, reject) => {
 
@@ -167,6 +196,10 @@ function saveTimeLimit(data){
 function limitShorts(data){
     return new Promise(async (resolve,reject) => {
         unblock(shortsUrl).then(_=>{}).catch(_=>{})
+
+        try{
+            browserAPI.storage.local.remove(keys.hideAll)
+        }catch(_){}
 
         saveTimeLimit(data)
             .then(s=> {
@@ -186,6 +219,8 @@ function processLimiter(tabId){
 
         const timeLimitData = await getTimeLimitData();
         if(!timeLimitData) resolve(null);
+
+        console.log(timeLimitData)
 
         const {amount, totalMinutes} = timeLimitData;
         const {expectedResetTime = 0, remaining} = await getWatchedData();
@@ -228,6 +263,14 @@ function getSettingsData(){
         }catch(e){}
 
 
+        try{
+           browserAPI.storage.local.get(keys.hideAll)
+            .then(s=> {
+                if(s[keys.hideAll]) resolve({status: true, data: {selector: 'hideAll'} }) 
+            });
+        }catch(e){}
+
+
        
         getTimeLimitData()
             .then(timeData=>{
@@ -264,6 +307,11 @@ browserAPI.runtime.onMessage.addListener((msg, sender, sendMessage) => {
                 .then(s=> sendMessage({status: true, message: "Successfully blocked all Youtube Shorts."}) )
                 .catch(e=> sendMessage({status: false, message: e.message || 'Cannot block.'}))
             break;
+        case events.HIDE_ALL:
+            hideAllShorts()
+                .then(s=> sendMessage(s) )
+                .catch(e=> sendMessage(e) )
+            break;
         default:
             break;
     }
@@ -275,6 +323,8 @@ browserAPI.runtime.onMessage.addListener((msg, sender, sendMessage) => {
 browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
     if (!changeInfo.url) return true;
+
+    if (changeInfo.status === 'loading') browserAPI.tabs.sendMessage(tabId, {type: events.TAB_CHANGED}).then(s=> {}).catch(e=> {})
 
     const url = await getVideoUrl(tab.url);
     if (!url) return true;

@@ -5,7 +5,8 @@ const browserAPI = chrome;
 const events = {
     GET_SETTINGS: "GET_SETTINGS",
     LIMIT_SHORTS: "LIMIT_SHORTS",
-    BLOCK_ALL: "BLOCK_ALL"
+    BLOCK_ALL: "BLOCK_ALL",
+    HIDE_ALL: "HIDE_ALL"
 }
 
 function hour2Minutes(totalMinutes) {
@@ -35,7 +36,7 @@ function processTimeLimit(formData) {
     const totalMinutes = (hours * 60) + minutes;
 
     browserAPI.runtime.sendMessage({
-        type: events.LIMIT_SHORTS, 
+        type: events.LIMIT_SHORTS,
         data: {
             amount: shortsAmt,
             totalMinutes
@@ -57,13 +58,28 @@ function processBlockingAllShorts() {
     browserAPI.runtime.sendMessage({ type: events.BLOCK_ALL }, (response) => {
         if (response?.status) {
             showMessageBubble();
-            shortsAmount.value = 0;
+            shortsAmount.value = 1;
             hours.value = 0;
             minutes.value = 0;
         } else {
             submitBtn.disabled = false;
         }
     });
+}
+
+function processHideAllShorts(){
+
+    browserAPI.runtime.sendMessage({ type: events.HIDE_ALL }, (response) => {
+        if (response?.status) {
+            showMessageBubble();
+            shortsAmount.value = 1;
+            hours.value = 0;
+            minutes.value = 0;
+        } else {
+            submitBtn.disabled = false;
+        }
+    });
+
 }
 
 function handleFormSubmit(e) {
@@ -75,11 +91,21 @@ function handleFormSubmit(e) {
 
     submitBtn.disabled = true
 
-    if (selection === "timeLimit") {
-        processTimeLimit(formData);
-    } else {
-        processBlockingAllShorts();
+    switch(selection){
+        case "timeLimit":
+            processTimeLimit(formData);
+            return;
+        case "blockAll":
+            processBlockingAllShorts();
+            return;
+        case "hideAll":
+            processHideAllShorts();
+            return;
+        default:
+            submitBtn.disabled = false
+            return;
     }
+
 }
 
 function onRadioSettingChange(e) {
@@ -91,6 +117,23 @@ function onRadioSettingChange(e) {
     }
 }
 
+function renderTimeLimitData(data) {
+
+    const { timeData } = data;
+    if (!timeData) return;
+
+    limitSettings.classList.remove('hidden');
+
+    shortsAmount.value = timeData?.amount || 0;
+
+    const timeValues = hour2Minutes(timeData?.totalMinutes || 0);
+    hours.value = timeValues.hours;
+    minutes.value = timeValues.minutes;
+
+    return;
+
+}
+
 browserAPI.runtime.sendMessage({ type: events.GET_SETTINGS }, (response) => {
 
     const { status, data } = response;
@@ -98,24 +141,28 @@ browserAPI.runtime.sendMessage({ type: events.GET_SETTINGS }, (response) => {
     const { selector } = data;
     if (!selector) return;
 
-    if (selector === 'blockAll') {
-        blockAllRadioBtn.checked = true;
-        timeLimitRadioBtn.checked = false;
-    } else {
-        blockAllRadioBtn.checked = false;
-        timeLimitRadioBtn.checked = true;
+    switch (selector) {
+        case 'blockAll':
+            blockAllRadioBtn.checked = true;
+            timeLimitRadioBtn.checked = false;
+            hideAllRadioBtn.checked = false;
+            break;
 
-        const { timeData } = data;
-        if (!timeData) return;
+        case "hideAll":
+            hideAllRadioBtn.checked = true;
+            blockAllRadioBtn.checked = false;
+            timeLimitRadioBtn.checked = false;
+            break;
 
-        limitSettings.classList.remove('hidden');
-
-        shortsAmount.value = timeData?.amount || 0;
-
-        const timeValues = hour2Minutes(timeData?.totalMinutes || 0);
-        hours.value = timeValues.hours;
-        minutes.value = timeValues.minutes;
-
+        case "timeLimit":
+            timeLimitRadioBtn.checked = true;
+            blockAllRadioBtn.checked = false;
+            hideAllRadioBtn.checked = false;
+            renderTimeLimitData(data);
+            break;
+        
+        default:
+            break;
     }
 
     return;

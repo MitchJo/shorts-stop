@@ -105,7 +105,6 @@ function unblock(path) {
                     addRules: [],
                     removeRuleIds: [ruleId]
                 }, () => {
-                    browserAPI.storage.local.remove(path);
                     resolve({ status: true, message: "Successfully unblock path." });
                 });
                 
@@ -119,13 +118,8 @@ function unblock(path) {
 
 function blockUrl(url) {
     return new Promise((resolve, _) => {
-
-        try {
-            browserAPI.storage.local.remove(keys.timeLimit)
-            browserAPI.storage.local.remove(keys.watchedData)
-            browserAPI.storage.local.remove(keys.hideAll)
-        } catch (e) { }
-
+        browserAPI.storage.local.clear();
+        
         const ruleId = Math.floor(Date.now() % 1000000);
 
         browserAPI.declarativeNetRequest.updateDynamicRules({
@@ -163,11 +157,7 @@ function blockUrl(url) {
 function hideAllShorts() {
     return new Promise((resolve, reject) => {
         unblock(shortsUrl).then(_ => { }).catch(_ => { });
-
-        try {
-            browserAPI.storage.local.remove(keys.timeLimit)
-            browserAPI.storage.local.remove(keys.watchedData)
-        } catch (_) { }
+        browserAPI.storage.local.clear();
 
         try {
             browserAPI.storage.local.set({ [keys.hideAll]: true })
@@ -197,10 +187,7 @@ function saveTimeLimit(data) {
 function limitShorts(data) {
     return new Promise(async (resolve, reject) => {
         unblock(shortsUrl).then(_ => { }).catch(_ => { })
-
-        try {
-            browserAPI.storage.local.remove(keys.hideAll)
-        } catch (_) { }
+        browserAPI.storage.local.clear();
 
         saveTimeLimit(data)
             .then(s => {

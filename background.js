@@ -14,49 +14,50 @@ const events = {
     LIMIT_SHORTS: "LIMIT_SHORTS",
     BLOCK_ALL: "BLOCK_ALL",
     HIDE_ALL: "HIDE_ALL",
-    TAB_CHANGED: "TAB_CHANGED"
+    TAB_CHANGED: "TAB_CHANGED",
+    SETTINGS_CHANGED: "SETTINGS_CHANGED"
 }
 
-function getTimeLimitData(){
+function getTimeLimitData() {
 
     return new Promise((resolve, reject) => {
 
         browserAPI.storage.local.get(keys.timeLimit)
-            .then(s=>{
-                if(!s[keys.timeLimit]) reject(null)    
+            .then(s => {
+                if (!s[keys.timeLimit]) reject(null)
                 resolve(s[keys.timeLimit])
             })
-            .catch(_=> {
+            .catch(_ => {
                 reject(null)
             })
-        
+
     })
 
 }
 
-function getWatchedData(){
+function getWatchedData() {
     return new Promise((resolve, _) => {
 
         browserAPI.storage.local.get(keys.watchedData)
-            .then(s=>{
-                if(!s[keys.watchedData]) resolve({lastWatchedTime: 0, remaining: 0})
+            .then(s => {
+                if (!s[keys.watchedData]) resolve({ lastWatchedTime: 0, remaining: 0 })
                 resolve(s[keys.watchedData])
             })
-            .catch(e=> {
-                console.log(e.message);
-                resolve({lastWatchedTime: 0, remaining: 0})
+            .catch(e => {
+                // console.log(e.message);
+                resolve({ lastWatchedTime: 0, remaining: 0 })
             })
-        
+
     })
 }
 
-function setWatchedData(data){
+function setWatchedData(data) {
     return new Promise((resolve, reject) => {
 
-        browserAPI.storage.local.set({[keys.watchedData]: data})
-            .then(s=>resolve(s))
-            .catch(e=> reject(e))
-        
+        browserAPI.storage.local.set({ [keys.watchedData]: data })
+            .then(s => resolve(s))
+            .catch(e => reject(e))
+
     })
 }
 
@@ -92,9 +93,9 @@ function isUrlBlocked(targetUrl) {
 
 }
 
-function unblock(path){
+function unblock(path) {
 
-    return new Promise((resolve,reject) => {
+    return new Promise((resolve, reject) => {
 
         browserAPI.storage.local.get(path, data => {
             const ruleId = data[path]
@@ -116,14 +117,14 @@ function unblock(path){
     })
 }
 
-function blockUrl(url){
+function blockUrl(url) {
     return new Promise((resolve, _) => {
-        
-        try{
+
+        try {
             browserAPI.storage.local.remove(keys.timeLimit)
             browserAPI.storage.local.remove(keys.watchedData)
             browserAPI.storage.local.remove(keys.hideAll)
-        }catch(e){}
+        } catch (e) { }
 
         const ruleId = Math.floor(Date.now() % 1000000);
 
@@ -143,35 +144,35 @@ function blockUrl(url){
                 }
             }],
             removeRuleIds: []
-        }, 
-        
-        () => {
+        },
 
-            try {
-                browserAPI.storage.local.set({ [url]: ruleId });
-                resolve({ success: true, message: 'URL blocked.' });
-            } catch (e) {
-                resolve({ success: false, message: e.message || "An error occurred." })
-            }
+            () => {
 
-        })
+                try {
+                    browserAPI.storage.local.set({ [url]: ruleId });
+                    resolve({ success: true, message: 'URL blocked.' });
+                } catch (e) {
+                    resolve({ success: false, message: e.message || "An error occurred." })
+                }
+
+            })
 
     });
 }
 
-function hideAllShorts(){
-    return new Promise((resolve,reject) => {
-        unblock(shortsUrl).then(_=>{}).catch(_=>{});
+function hideAllShorts() {
+    return new Promise((resolve, reject) => {
+        unblock(shortsUrl).then(_ => { }).catch(_ => { });
 
-        try{
+        try {
             browserAPI.storage.local.remove(keys.timeLimit)
             browserAPI.storage.local.remove(keys.watchedData)
-        }catch(_){}
+        } catch (_) { }
 
-        try{
+        try {
             browserAPI.storage.local.set({ [keys.hideAll]: true })
             resolve({ status: true, message: 'Shorts hidden.' })
-        }catch(e){
+        } catch (e) {
             reject({ status: false, message: e.message || 'Cannot save.' })
         }
 
@@ -179,58 +180,56 @@ function hideAllShorts(){
 }
 
 
-function saveTimeLimit(data){
+function saveTimeLimit(data) {
     return new Promise((resolve, reject) => {
 
-        browserAPI.storage.local.set({[keys.timeLimit]: data })
-            .then(s=>{
-                resolve({status: true, message: "Time limit saved successfully."})
+        browserAPI.storage.local.set({ [keys.timeLimit]: data })
+            .then(s => {
+                resolve({ status: true, message: "Time limit saved successfully." })
             })
             .catch(e => {
-                reject({status: true, message: e.message || "Could not save Time limit."});
+                reject({ status: true, message: e.message || "Could not save Time limit." });
             })
 
     })
 }
 
-function limitShorts(data){
-    return new Promise(async (resolve,reject) => {
-        unblock(shortsUrl).then(_=>{}).catch(_=>{})
+function limitShorts(data) {
+    return new Promise(async (resolve, reject) => {
+        unblock(shortsUrl).then(_ => { }).catch(_ => { })
 
-        try{
+        try {
             browserAPI.storage.local.remove(keys.hideAll)
-        }catch(_){}
+        } catch (_) { }
 
         saveTimeLimit(data)
-            .then(s=> {
-                
-                setWatchedData({lastWatchedTime: 0, expectedResetTime: 0, remaining: data?.amount || 0})
-                    .then(s=> resolve(s))
-                    .catch(e=> reject(e))
+            .then(s => {
+
+                setWatchedData({ lastWatchedTime: 0, expectedResetTime: 0, remaining: data?.amount || 0 })
+                    .then(s => resolve(s))
+                    .catch(e => reject(e))
 
             })
-            .catch(e=> reject(e))
-        
+            .catch(e => reject(e))
+
     })
 }
 
-function processLimiter(tabId){
-    return new Promise(async (resolve,_)=>{
+function processLimiter(tabId) {
+    return new Promise(async (resolve, _) => {
 
         const timeLimitData = await getTimeLimitData();
-        if(!timeLimitData) resolve(null);
+        if (!timeLimitData) resolve(null);
 
-        console.log(timeLimitData)
-
-        const {amount, totalMinutes} = timeLimitData;
-        const {expectedResetTime = 0, remaining} = await getWatchedData();
+        const { amount, totalMinutes } = timeLimitData;
+        const { expectedResetTime = 0, remaining } = await getWatchedData();
 
         let shortsWatched = (remaining < 0 ? 1 : remaining) - 1;
-        const currentTime= Date.now();
-        
+        const currentTime = Date.now();
+
         let newResetTime = expectedResetTime;
 
-        if(currentTime > expectedResetTime) {
+        if (currentTime > expectedResetTime) {
             newResetTime = currentTime + (totalMinutes * 60000);
             shortsWatched = amount;
         }
@@ -241,7 +240,7 @@ function processLimiter(tabId){
             remaining: shortsWatched
         })
 
-        if(shortsWatched < 1 ) {
+        if (shortsWatched < 1) {
             const redirectUrl = browserAPI.runtime.getURL("warning.html");
             browserAPI.tabs.update(tabId, { url: redirectUrl });
         }
@@ -252,39 +251,39 @@ function processLimiter(tabId){
     })
 }
 
-function getSettingsData(){
-    return new Promise((resolve, reject) => {
+function getSettingsData() {
+    return new Promise(async (resolve, reject) => {
 
-        try{
-           browserAPI.storage.local.get(shortsUrl)
-            .then(s=> {
-                if(s[shortsUrl]) resolve({status: true, data: {selector: 'blockAll'} }) 
-            });
-        }catch(e){}
+        try {
+            const hideAllResponse = await browserAPI.storage.local.get(keys.hideAll);
+            if(hideAllResponse[keys.hideAll]) resolve({ status: true, data: { selector: 'hideAll' } })
+        } catch (e) { }
 
 
-        try{
-           browserAPI.storage.local.get(keys.hideAll)
-            .then(s=> {
-                if(s[keys.hideAll]) resolve({status: true, data: {selector: 'hideAll'} }) 
-            });
-        }catch(e){}
+        try {
+            const blockAllResponse = await  browserAPI.storage.local.get(shortsUrl);
+            if(blockAllResponse[shortsUrl]) resolve({ status: true, data: { selector: 'blockAll' } })
+        } catch (e) { }
 
 
-       
-        getTimeLimitData()
-            .then(timeData=>{
-                if(!timeData) reject({status: false, message: 'N/A'})
+        const timeLimitDataResponse = await getTimeLimitData().then(s=>s).catch(_=>null);
+         if (!timeLimitDataResponse) reject({ status: false, message: 'N/A' })
 
-                getWatchedData()
-                    .then(w=> resolve({status: true, data: {selector: 'timeLimit', timeData, watchedData: w}}) )
-                    .catch(e=> reject({status: false, message: e.message || 'N/A'}) )
+        const watchedDataResponse =  await getWatchedData().then(w => w).catch(_ => null);
 
-            })
-            .catch(e=> reject({status: false, message: 'N/A'}))
-      
+        if(watchedDataResponse) resolve({ status: true, data: { selector: 'timeLimit', timeData: timeLimitDataResponse, watchedData: watchedDataResponse } })
+
+        if(!watchedDataResponse) reject({ status: false, message: 'N/A' })
+
+    })
+
+}
 
 
+function broadcastSettingsChanges() {
+
+    browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if(tabs[0]?.id) browserAPI.tabs.sendMessage(tabs[0]?.id, { type: events.SETTINGS_CHANGED }).then(_=>{}).catch(_=>{})
     })
 
 }
@@ -294,23 +293,32 @@ browserAPI.runtime.onMessage.addListener((msg, sender, sendMessage) => {
     switch (msg.type) {
         case events.GET_SETTINGS:
             getSettingsData()
-                .then(s=> sendMessage(s))
-                .catch(e=> sendMessage(e) )
+                .then(s => sendMessage(s))
+                .catch(e => sendMessage(e))
             break
         case events.LIMIT_SHORTS:
             limitShorts(msg.data)
-                .then(s=> sendMessage({status: true, message: "Successfully limited Youtube Shorts."}) )
-                .catch(e=> sendMessage({status: false, message: e.message || 'Cannot Limit.'}))
+                .then(_ => {
+                    sendMessage({ status: true, message: "Successfully limited Youtube Shorts." })
+                    broadcastSettingsChanges()
+                })
+                .catch(e => sendMessage({ status: false, message: e.message || 'Cannot Limit.' }))
             break;
         case events.BLOCK_ALL:
             blockUrl(shortsUrl)
-                .then(s=> sendMessage({status: true, message: "Successfully blocked all Youtube Shorts."}) )
-                .catch(e=> sendMessage({status: false, message: e.message || 'Cannot block.'}))
+                .then(_ => {
+                    sendMessage({ status: true, message: "Successfully blocked all Youtube Shorts." })
+                    broadcastSettingsChanges();
+                })
+                .catch(e => sendMessage({ status: false, message: e.message || 'Cannot block.' }))
             break;
         case events.HIDE_ALL:
             hideAllShorts()
-                .then(s=> sendMessage(s) )
-                .catch(e=> sendMessage(e) )
+                .then(s => {
+                    sendMessage(s)
+                    broadcastSettingsChanges()
+                })
+                .catch(e => sendMessage(e))
             break;
         default:
             break;
@@ -324,7 +332,7 @@ browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
     if (!changeInfo.url) return true;
 
-    if (changeInfo.status === 'loading') browserAPI.tabs.sendMessage(tabId, {type: events.TAB_CHANGED}).then(s=> {}).catch(e=> {})
+    if (changeInfo.status === 'loading') browserAPI.tabs.sendMessage(tabId, { type: events.TAB_CHANGED }).then(s => { }).catch(e => { })
 
     const url = await getVideoUrl(tab.url);
     if (!url) return true;
@@ -337,10 +345,10 @@ browserAPI.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         return true;
     }
 
-    if(!url.includes(shortsUrl)) return;
+    if (!url.includes(shortsUrl)) return;
 
     await processLimiter(tabId);
-   
+
     return true;
 
 });
